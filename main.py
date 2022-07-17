@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from db.base import database
-from endpoints import сonstruction_objects
+from endpoints import сonstruction_objects, banks, diagrams
 import uvicorn
 
 app = FastAPI(
@@ -11,10 +11,12 @@ app = FastAPI(
         "url": "https://t.me/Iosif_Polodashvili",
         "email": "iosif.polodashvili@mail.ru",
     },
-    docs_url="/api/docs"
+    docs_url="/api/docs",
 )
 
 app.include_router(сonstruction_objects.router, prefix="/api/objects", tags=["objects"])
+app.include_router(banks.router, prefix="/api/banks", tags=["banks"])
+app.include_router(diagrams.router, prefix="/api/diagrams", tags=["diagrams"])
 
 
 @app.on_event("startup")

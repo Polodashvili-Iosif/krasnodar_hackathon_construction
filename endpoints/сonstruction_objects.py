@@ -1,7 +1,7 @@
 from typing import List
 from models.сonstruction_objects import Object, ObjectIn
 from repositories.сonstruction_objects import ObjectRepository
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from .depends import get_object_repository
 
 router = APIRouter()
@@ -9,9 +9,11 @@ router = APIRouter()
 
 @router.get("/", response_model=List[Object])
 async def read_objects(
+        response: Response,
         limit: int = 1000,
         offset: int = 0,
-        objects: ObjectRepository = Depends(get_object_repository)):
+        objects: ObjectRepository = Depends(get_object_repository),):
+    response.headers["Content-type"] = "application/json; charset=utf-8"
     return await objects.get_all(limit=limit, offset=offset)
 
 

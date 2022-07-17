@@ -1,5 +1,7 @@
 import time
+from random import choice, randint
 from typing import Iterable, Mapping, Any, Generator
+
 
 from dotenv import dotenv_values
 from openpyxl import load_workbook
@@ -34,12 +36,14 @@ def to_postgresql_database(placements: Iterable[Mapping[str, Any]],
                 number_of_the_room               INT          NOT NULL,
                 type_of_placement                VARCHAR(20)  NOT NULL,
                 status                           VARCHAR(30)  NOT NULL,
+                new_building_or_resale           VARCHAR(20)  NOT NULL,
                 placement_area                   FLOAT(2)     NOT NULL,
                 floor                            INT          NOT NULL,
                 living_area                      FLOAT(2)     NOT NULL,
                 number_of_rooms                  VARCHAR(30)  NOT NULL,
                 total_area                       FLOAT(2)     NOT NULL,
                 area_without_balconies_loggias   FLOAT(2)     NOT NULL,
+                cadastral_number                 VARCHAR(30)  NOT NULL,
                 created_at                       TIMESTAMP    NOT NULL,
                 updated_at                       TIMESTAMP    NOT NULL);"""
             )
@@ -53,12 +57,14 @@ def to_postgresql_database(placements: Iterable[Mapping[str, Any]],
                     '{placement["Номер помещения"]}',
                     '{placement["Вид помещения"]}',
                     '{placement["Статус"]}',
+                    '{placement["Новостройка/Вторичка"]}',
                     {placement["Площадь помещения"]},
                     {placement["Этаж"]},
                     {placement["Жилая площадь"]},
                     '{placement["Количество комнат"]}',
-                    '{placement["Общая площадь"]}',
-                    '{placement["Площадь без балконов/лоджий, кв.м."]}',
+                    {placement["Общая площадь"]},
+                    {placement["Площадь без балконов/лоджий"]},
+                    '{placement["Кадастровый номер"]}',
                     to_timestamp('{date_and_time}'),
                     to_timestamp('{date_and_time}'))"""
                 )
@@ -79,6 +85,8 @@ def get_data() -> Generator:
                          else "Жилое",
                      'Статус':
                          sheet.cell(row=row, column=4).value,
+                     'Новостройка/Вторичка':
+                         choice(["Новостройка", "Вторичка"]),
                      'Площадь помещения':
                          float(sheet.cell(row=row, column=5).value.replace(',', '.'))
                          if sheet.cell(row=row, column=5).value else 0,
@@ -91,23 +99,25 @@ def get_data() -> Generator:
                          sheet.cell(row=row, column=10).value,
                      'Общая площадь':
                          float(sheet.cell(row=row, column=11).value.replace(',', '.')),
-                     'Площадь без балконов/лоджий, кв.м.':
+                     'Площадь без балконов/лоджий':
                          float(sheet.cell(row=row, column=12).value.replace(',', '.'))
                          if sheet.cell(row=row, column=12).value else 0,
+                     'Кадастровый номер':
+                         f"02:57:020102:{randint(0, 10000)}"
                      }
         yield placement
         row += 1
 
 
 def main():
-    data = list(get_data())
+    data = get_data()
     config = dotenv_values(".env")
     to_postgresql_database(
         data, "placements",
         host=config['HOST'],
-        user=config['USER_NAME'],
-        password=config['PASSWORD'],
-        database=config['DB_NAME'],
+        user=config['POSTGRES_USER'],
+        password=config['POSTGRES_PASSWORD'],
+        database=config['POSTGRES_DB'],
         port=config['PORT'],
     )
 

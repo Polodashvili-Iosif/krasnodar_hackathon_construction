@@ -7,12 +7,14 @@ class BaseObject(BaseModel):
     number_of_the_room: int
     type_of_placement: str
     status: str
+    new_building_or_resale: str
     placement_area: float
     floor: int
     living_area: float
     number_of_rooms: str
     total_area: float
     area_without_balconies_loggias: float
+    cadastral_number: str
 
 
 class Object(BaseObject):
